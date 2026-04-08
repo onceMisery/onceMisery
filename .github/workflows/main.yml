@@ -1,9 +1,9 @@
-name: Generate Snake Animation
+name: Generate Star Wars Contribution Snake
 
 on:
   # 每天午夜自动运行一次
   schedule:
-    - cron: "0 0 * * *" 
+    - cron: "0 0 * * *"
   
   # 允许手动触发工作流
   workflow_dispatch:
@@ -19,14 +19,15 @@ jobs:
     timeout-minutes: 10
     
     steps:
-      # 生成贪吃蛇 svg 动画
-      - name: Generate github-contribution-grid-snake.svg
+      # 生成星球大战主题的动画 SVG
+      - name: Generate github-contribution-grid-starwars.svg
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
+            dist/github-contribution-grid-starwars.svg?palette=github-dark-starwars # 新增：星球大战主题 SVG
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
