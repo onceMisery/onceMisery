@@ -57,14 +57,13 @@
 ### 📊 GitHub Stats
 
 <div align="center">
-  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=onceMisery&show_icons=true&hide_border=true&include_all_commits=true&count_private=true&theme=tokyonight" />
-  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=onceMisery&layout=compact&hide_border=true&theme=tokyonight" />
+  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=onceMisery&show_icons=true&hide_border=true&include_all_commits=true&theme=tokyonight&v=1" />
+  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=onceMisery&layout=compact&hide_border=true&theme=tokyonight&v=1" />
 </div>
 <br/>
 <div align="center">
   <img src="https://github-readme-streak-stats.herokuapp.com/?user=onceMisery&theme=tokyonight&hide_border=true" alt="GitHub Streak" />
 </div>
-
 ---
 
 ### 🐍 Contribution Snake Animation
