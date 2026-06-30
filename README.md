@@ -29,6 +29,7 @@
   <img src="https://img.shields.io/badge/MyBatis--Plus-000000?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white" />
   <img src="https://img.shields.io/badge/Go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white" />
+  <img src="https://img.shields.io/badge/Rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white" />
 </p>
 
 #### 🚀 Distributed Systems & Middleware
