@@ -16,7 +16,7 @@
 - 🔭 I’m currently focusing on **Java Development, Distributed Systems, and High-Performance Architecture**.
 - 🤝 I’m actively contributing to **Apache Open Source Projects** (enjoying the process of submitting PRs and PIPs).
 - 🌱 I’m currently exploring **Vector Databases** and **AI Integration** (like Spring AI).
-- 💬 Ask me about **Java, MyBatis-Plus, Maven, or Consensus Protocols (like Raft)**.
+- 💬 Ask me about **Java, Databases , middleware, or Microservices architecture, distributed systems, and cloud-native.**.
 
 
 ---
