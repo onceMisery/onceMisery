@@ -1,16 +1,21 @@
-"""把 assets/avatar.jpg 降采样成像素风色块数据。
+"""把 assets/avatar.jpg 转成 CRT 半色调点阵数据。
 
-参考项目的卡片左侧是 ASCII art 肖像，链接按钮是像素精灵 —— 头像也走同一条
-复古颗粒路线：先把图缩到 GRID x GRID，再把每个像素放大成一个硬边方块。
+风格参照 yetone 的 profile README：荧光屏里的人像不是彩色实心方块，而是
+「亮部连成水平条块 + 暗部细密网点」，整幅再叠水平扫描线与辉光。
 
-为什么需要浏览器：本仓库不引入 Pillow / ImageMagick 之类的图像依赖，
-而 JPEG 解码最省事的办法是让本机 Chrome/Edge 用 canvas 的 getImageData 读一遍。
-图片以 data URI 内联进 HTML（同源，canvas 不会被跨域污染），headless 的
---dump-dom 再把像素数组吐回来。
+流程：
+  1. 借本机 Chrome/Edge 的 canvas getImageData 解码 JPEG（data URI 内联，
+     避免 canvas 跨域污染，--dump-dom 把像素数组吐回来）；
+  2. 转灰度、按 2% / 98% 分位做对比度拉伸；
+  3. 用 4x4 Bayer 有序抖动打散量化边界，得到 4 档亮度等级；
+  4. 写 assets/avatar-pixels.json，并另存一份可单独引用的
+     assets/avatar-pixel.svg。
 
-**这是一次性的素材加工脚本，只在换头像时本地跑一次。** 产物
-assets/avatar-pixels.json 会提交进仓库，所以 GitHub Actions 里的
-build_card.py 只需要读 JSON，既不用浏览器也不用解码 JPEG。
+等级 0/1/2/3 分别渲染成 空 / 小点 / 大点 / 满格，相邻满格自然连成水平条块，
+小点自然形成网点 —— 这正是参考图的质感来源。
+
+**这是一次性的素材加工脚本，只在换头像时本地跑一次。** 像素等级数据会提交
+进仓库，所以 GitHub Actions 里的 build_card.py 只读 JSON，不需要浏览器或图像库。
 
 用法：
     python tools/build_pixels.py            # 自动找 Chrome / Edge
@@ -25,18 +30,27 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 from html import unescape
 from pathlib import Path
+
+from build_card import CRT_BG, CRT_COLORS, render_halftone, scanlines
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "assets" / "avatar.jpg"
 OUT = ROOT / "assets" / "avatar-pixels.json"
 SVG_OUT = ROOT / "assets" / "avatar-pixel.svg"
 
-GRID = 44          # 44x44 个色块，放大后就是明显的像素画
-QUANT = 12         # 每通道量化步长：压到有限色阶，又不至于让灰色背景偏紫偏绿
+GRID = 64             # 64x64 的点阵格，比实心像素画更细，才有「细密网点」
+DITHER = 0.30         # Bayer 抖动强度，打散色阶边界
+CUTS = (0.22, 0.46, 0.80)   # 亮度分级阈值；第三档调高，避免白雾过曝连成整片
+
+BAYER = (
+    (0, 8, 2, 10),
+    (12, 4, 14, 6),
+    (3, 11, 1, 9),
+    (15, 7, 13, 5),
+)
 
 
 def find_chrome() -> str:
@@ -84,38 +98,39 @@ if (img.complete) emit(); else img.onload = emit;
 </script></body>"""
 
 
-def quantize(v: int) -> int:
-    return min(255, max(0, round(v / QUANT) * QUANT))
+def luma(rgb) -> float:
+    r, g, b = rgb
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
 
 
-def hex_color(rgb) -> str:
-    return "#%02x%02x%02x" % tuple(quantize(v) for v in rgb)
+def levels_from(pixels: list) -> list[list[int]]:
+    values = sorted(luma(p) for p in pixels)
+    lo = values[int(len(values) * 0.02)]
+    hi = values[int(len(values) * 0.98)]
+    span = max(hi - lo, 1e-6)
+
+    out = []
+    for y in range(GRID):
+        row = []
+        for x in range(GRID):
+            norm = min(1.0, max(0.0, (luma(pixels[y * GRID + x]) - lo) / span))
+            threshold = (BAYER[y % 4][x % 4] + 0.5) / 16.0
+            q = norm + (threshold - 0.5) * DITHER
+            row.append(sum(q >= cut for cut in CUTS))  # 0..3
+        out.append(row)
+    return out
 
 
-def rle(row: list[int]) -> list[tuple[int, int, int]]:
-    """把一行里连续同色的格子合成 (起点, 长度, 色号)，减少 SVG 节点数。"""
-    runs, start, prev = [], 0, row[0]
-    for x in range(1, len(row)):
-        if row[x] != prev:
-            runs.append((start, x - start, prev))
-            start, prev = x, row[x]
-    runs.append((start, len(row) - start, prev))
-    return runs
-
-
-def write_svg(rows: list[list[int]], palette: list[str]) -> None:
-    parts = [
+def write_svg(levels: list[list[int]]) -> None:
+    """另存一份可单独引用的 CRT 半色调头像，与卡片内的渲染完全一致。"""
+    SVG_OUT.write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="440" height="440" '
-        f'viewBox="0 0 {GRID} {GRID}" shape-rendering="crispEdges">',
-        f'<rect width="{GRID}" height="{GRID}" fill="#0f1b22"/>',
-    ]
-    for y, row in enumerate(rows):
-        for x, length, idx in rle(row):
-            parts.append(
-                f'<rect x="{x}" y="{y}" width="{length}" height="1" fill="{palette[idx]}"/>'
-            )
-    parts.append("</svg>")
-    SVG_OUT.write_text("\n".join(parts) + "\n", encoding="utf-8")
+        f'viewBox="0 0 {GRID} {GRID}" shape-rendering="crispEdges">\n'
+        f'<rect width="{GRID}" height="{GRID}" fill="{CRT_BG}"/>\n'
+        f'{render_halftone(levels, CRT_COLORS, GRID, GRID)}\n'
+        f'{scanlines(GRID, GRID)}\n</svg>\n',
+        encoding="utf-8",
+    )
 
 
 def main() -> None:
@@ -137,29 +152,18 @@ def main() -> None:
     if not match or not match.group(1).strip():
         raise SystemExit("未能从浏览器取回像素数据（检查 --dump-dom 输出）")
     data = json.loads(unescape(match.group(1)))
-    print(f"source  : {data['width']}x{data['height']} -> {GRID}x{GRID} pixels")
+    print(f"source  : {data['width']}x{data['height']} -> {GRID}x{GRID} halftone cells")
 
-    palette: list[str] = []
-    lookup: dict[str, int] = {}
-    rows: list[list[int]] = []
-    for y in range(GRID):
-        row = []
-        for x in range(GRID):
-            color = hex_color(data["pixels"][y * GRID + x])
-            if color not in lookup:
-                lookup[color] = len(palette)
-                palette.append(color)
-            row.append(lookup[color])
-        rows.append(row)
+    levels = levels_from(data["pixels"])
+    counts = [sum(row.count(i) for row in levels) for i in range(4)]
 
     OUT.write_text(
-        json.dumps({"source": SRC.name, "w": GRID, "h": GRID,
-                    "palette": palette, "rows": rows}, separators=(",", ":")) + "\n",
+        json.dumps({"source": SRC.name, "mode": "crt-halftone",
+                    "w": GRID, "h": GRID, "levels": levels}, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
-    write_svg(rows, palette)
-    runs = sum(len(rle(row)) for row in rows)
-    print(f"palette : {len(palette)} colors | {GRID*GRID} cells -> {runs} SVG rects")
+    write_svg(levels)
+    print(f"levels  : empty={counts[0]} dot={counts[1]} big={counts[2]} solid={counts[3]}")
     print(f"wrote   : {OUT.name} ({OUT.stat().st_size:,} bytes)")
     print(f"wrote   : {SVG_OUT.name} ({SVG_OUT.stat().st_size:,} bytes)")
 

@@ -3,9 +3,10 @@
 参考项目的做法是把「肖像 ASCII art + 终端信息面板」做成一张主题感知的 SVG。
 这里保留同样的骨架，但换成自己的东西：
 
-- 左侧是用户提供的头像经 tools/build_pixels.py 降采样后的 44x44 像素画，
-  硬边色块、有限色阶，与参考项目的像素精灵同一路数；
-  像素数据存在 assets/avatar-pixels.json，所以这里不需要浏览器或图像库；
+- 左侧是头像经 tools/build_pixels.py 转成的 CRT 半色调点阵：
+  亮部满格连成水平条块、暗部是细密网点，再叠水平扫描线与荧光屏辉光
+  （风格参照 yetone 的 profile README，配色换成自己的深海青蓝）；
+  点阵等级存在 assets/avatar-pixels.json，所以这里不需要浏览器或图像库；
 - 右侧是纯 ASCII 的终端面板，数值来自 cache/stats.json；
 - 调色板取自头像本身：深板岩灰 + 青蓝水花 + 白色泡沫。
   CJK 字符在等宽字体里是双宽的，会破坏点线对齐，
@@ -53,6 +54,14 @@ THEMES = {
         "wave": "#c4e6ef", "prompt": "#0b7fa3", "caption": "#5a8a9b",
     },
 }
+
+# CRT 荧光屏专用色：屏幕是发光体，明暗主题下都保持暗底亮像。
+CRT_BG = "#0b1c24"     # 屏底
+CRT_DOT = "#2f7f96"    # 暗部细网点
+CRT_MID = "#56c4dc"    # 中调大点
+CRT_HI = "#e8f8fb"     # 高光满格，相邻连成水平条块
+CRT_SCAN = "#06202a"   # 水平扫描线
+CRT_COLORS = (None, CRT_DOT, CRT_MID, CRT_HI)
 
 TITLE = "onceMisery@deep-ocean"
 
@@ -127,43 +136,73 @@ def render_line(kind: str, payload, y: int) -> str:
     )
 
 
-def rle(row: list[int]) -> list[tuple[int, int, int]]:
-    """合并一行里连续同色的格子，减少 SVG 节点数。"""
-    runs, start, prev = [], 0, row[0]
-    for x in range(1, len(row)):
-        if row[x] != prev:
-            runs.append((start, x - start, prev))
-            start, prev = x, row[x]
-    runs.append((start, len(row) - start, prev))
-    return runs
+def render_halftone(levels: list[list[int]], colors, w: int, h: int) -> str:
+    """把 0..3 的亮度等级画成 CRT 半色调：空 / 小点 / 大点 / 满格。
+
+    满格按行合并进一个 path，相邻亮格自然连成参考图那种水平条块；
+    小点与大点保持逐格独立，形成细密网点。同色矩形共用一个 <path>，
+    所以 64x64 的点阵也只要三个节点。
+    """
+    buckets: dict[int, list[tuple[float, float, float, float]]] = {1: [], 2: [], 3: []}
+    for y, row in enumerate(levels[:h]):
+        x = 0
+        while x < w:
+            lv = row[x]
+            if lv == 3:
+                run = 1
+                while x + run < w and row[x + run] == 3:
+                    run += 1
+                buckets[3].append((x, y, run, 1))
+                x += run
+                continue
+            if lv in (1, 2):
+                size = 0.42 if lv == 1 else 0.78
+                off = (1 - size) / 2
+                buckets[lv].append((x + off, y + off, size, size))
+            x += 1
+    parts = []
+    for lv in (1, 2, 3):
+        if not buckets[lv] or not colors[lv]:
+            continue
+        path = " ".join(
+            f"M{x:g} {y:g}h{rw:g}v{rh:g}h-{rw:g}z" for x, y, rw, rh in buckets[lv]
+        )
+        parts.append(f'<path d="{path}" fill="{colors[lv]}"/>')
+    return "\n".join(parts)
+
+
+def scanlines(w: int, h: int) -> str:
+    """每 5 行一条水平扫描线，把条块切开，制造 CRT 荧光屏质感。"""
+    return "\n".join(
+        f'<rect x="0" y="{y + 0.62:g}" width="{w}" height="0.34" '
+        f'fill="{CRT_SCAN}" opacity="0.5"/>'
+        for y in range(4, h, 5)
+    )
 
 
 def pixel_art(c: dict) -> str:
-    """用 assets/avatar-pixels.json 渲染硬边像素画；缺失时回退成原图圆形头像。"""
+    """用 assets/avatar-pixels.json 渲染 CRT 半色调头像；缺失时回退成原图。"""
     data = load_json(PIXELS)
-    if data.get("rows") and data.get("palette"):
+    if data.get("levels"):
         w, h = data["w"], data["h"]
-        palette, grid = data["palette"], data["rows"]
         scale = ART_SIZE / w
-        cells = "\n".join(
-            f'<rect x="{x}" y="{y}" width="{length}" height="1" fill="{palette[idx]}"/>'
-            for y, row in enumerate(grid)
-            for x, length, idx in rle(row)
-        )
         art = (
             f'<g transform="translate({ART_X},{ART_Y}) scale({scale:.6f})" '
-            f'shape-rendering="crispEdges">{cells}</g>'
+            f'shape-rendering="crispEdges">'
+            f'{render_halftone(data["levels"], CRT_COLORS, w, h)}'
+            f'{scanlines(w, h)}</g>'
         )
+        # 外框两层：内侧实线 + 外侧半透明粗描边，模拟荧光屏辉光。
         frame = (
-            f'<rect x="{ART_X - 5}" y="{ART_Y - 5}" width="{ART_SIZE + 10}" '
-            f'height="{ART_SIZE + 10}" fill="none" stroke="{c["ring"]}" stroke-width="2"/>'
-            f'<rect x="{ART_X - 10}" y="{ART_Y - 10}" width="{ART_SIZE + 20}" '
-            f'height="{ART_SIZE + 20}" fill="none" stroke="{c["rule"]}" '
-            f'stroke-width="1" stroke-dasharray="3 5"/>'
+            f'<rect x="{ART_X - 4}" y="{ART_Y - 4}" width="{ART_SIZE + 8}" '
+            f'height="{ART_SIZE + 8}" fill="none" stroke="{c["ring"]}" '
+            f'stroke-width="7" opacity="0.12"/>'
+            f'<rect x="{ART_X - 2}" y="{ART_Y - 2}" width="{ART_SIZE + 4}" '
+            f'height="{ART_SIZE + 4}" fill="none" stroke="{c["ring"]}" stroke-width="2"/>'
         )
         return (
             f'<rect x="{ART_X}" y="{ART_Y}" width="{ART_SIZE}" height="{ART_SIZE}" '
-            f'fill="{c["bg"]}"/>{art}{frame}'
+            f'fill="{CRT_BG}"/>{art}{frame}'
         )
 
     # 素材丢失时的兜底：至少不让整张卡片变成空白。
