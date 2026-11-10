@@ -39,7 +39,10 @@
 ## 🌊 关于我
 
 混迹在github的程序猿！
-这一年大部分时间花在 [dbx](https://github.com/t8y2/dbx) 上。它是 Rust + Java + TypeScript 写的跨平台数据库客户端，我提了 54 个 PR，合并 50 个，做的是查询、连接恢复、ZooKeeper / Pulsar / Kafka 管理、CSV / XLSX 流式导出和插件。往 Apache SeaTunnel、Pulsar、Dubbo 也提过 PR 和 PIP。
+
+这一年大部分时间花在 [dbx](https://github.com/t8y2/dbx) 上。它是 Rust + Java + TypeScript 写的跨平台数据库客户端，我提了 54 个 PR，合并 50 个，做的是查询、连接恢复、ZooKeeper / Pulsar / Kafka 管理、CSV / XLSX 流式导出和插件。
+
+往 Apache SeaTunnel、Pulsar、Dubbo 也提过 PR 和 PIP。
 
 自己在做 [seahorse-agent](https://github.com/onceMisery/seahorse-agent)，Java 写的，做 RAG 和长期记忆；[hertz-studio](https://github.com/onceMisery/hertz-studio) 是桌面客户端，最近在加桌面歌词和局域网一起听。
 
