@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="333.333px" height="56px"
+     viewBox="0 0 333.333 56"
+     font-family="ConsolasFallback,Consolas,Menlo,DejaVu Sans Mono,monospace">
+<style>
+@font-face {
+  src: local('Consolas'), local('Menlo'), local('DejaVu Sans Mono');
+  font-family: 'ConsolasFallback';
+  font-display: swap;
+  size-adjust: 109%;
+}
+text {white-space: pre;}
+.label {font-size: 16px; font-weight: bold; fill: #dceff5;}
+.mono {font-size: 12px; font-weight: bold; fill: #0f1b22;}
+</style>
+<rect x="5.667" y="1" width="322.000" height="54" rx="10"
+      fill="#12232c" stroke="#2a4d5b" stroke-width="1"/>
+<rect x="16.667" y="52" width="300.000" height="2"
+      fill="#a9e2f0" opacity="0.85"/>
+<circle cx="31.667" cy="28" r="15" fill="#a9e2f0"/>
+<text x="31.667" y="32" text-anchor="middle" class="mono">LH</text>
+<text x="60.667" y="33" class="label">LEARNING HUB</text>
+</svg>

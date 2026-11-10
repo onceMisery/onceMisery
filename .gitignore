@@ -1,0 +1,10 @@
+# WorkBuddy 本地项目数据，不进版本库
+.workbuddy/
+
+# Python 运行产物
+__pycache__/
+*.py[cod]
+
+# 系统文件
+.DS_Store
+Thumbs.db

@@ -1,0 +1,56 @@
+# 每日刷新 neofetch 风格的主页卡片与链接按钮。
+#
+# fetch_stats.py 抓公开 GitHub 数据到 cache/stats.json；build_card.py 用
+# assets/avatar-pixels.json（已提交的像素画素材）+ cache/stats.json 重建
+# dark_mode.svg / light_mode.svg；build_links.py 复用同一套配色重建三枚按钮。
+# 全部只用 Python 标准库，不需要 pip 依赖、不需要浏览器、也不需要额外的 PAT。
+# 换头像才需要本地跑一次 tools/build_pixels.py，并把新像素数据提交进来。
+name: Update Profile Card
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "assets/**"
+      - "tools/**"
+      - ".github/workflows/profile-card.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-card
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch GitHub stats
+        env:
+          GITHUB_TOKEN: ${{ secrets.STATS_TOKEN || secrets.GITHUB_TOKEN }}
+        run: python tools/fetch_stats.py
+
+      - name: Rebuild the profile card
+        run: python tools/build_card.py
+
+      - name: Rebuild the link buttons
+        run: python tools/build_links.py
+
+      - name: Commit regenerated assets
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: refresh profile card stats"
+          branch: main
+          file_pattern: "*.svg cache/*.json"
