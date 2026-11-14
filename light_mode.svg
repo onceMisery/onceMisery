@@ -60,7 +60,7 @@ text {font-size: 15px; white-space: pre;}
 <text x="320" y="186"><tspan class="key">Editor</tspan><tspan class="dot"> ....................... </tspan><tspan class="value">VS Code, Cursor, Zed</tspan></text>
 <text x="320" y="209"><tspan class="key">Motto</tspan><tspan class="dot"> ........................ </tspan><tspan class="value">Make a little progress every day.</tspan></text>
 <text x="320" y="255" class="section">- Last 12 Months</text>
-<text x="320" y="278"><tspan class="key">PRs</tspan><tspan class="dot"> .......................... </tspan><tspan class="value">95   { merged 66 }</tspan></text>
+<text x="320" y="278"><tspan class="key">PRs</tspan><tspan class="dot"> .......................... </tspan><tspan class="value">95   { merged 67 }</tspan></text>
 <text x="320" y="301"><tspan class="key">Repos</tspan><tspan class="dot"> ........................ </tspan><tspan class="value">52 active / 96 public</tspan></text>
 <text x="320" y="324"><tspan class="key">Top.Repo</tspan><tspan class="dot"> ..................... </tspan><tspan class="value">t8y2/dbx (56 PRs)</tspan></text>
 <text x="320" y="347"><tspan class="key">Apache</tspan><tspan class="dot"> ....................... </tspan><tspan class="value">7 PRs  seatunnel/pulsar/dubbo</tspan></text>
