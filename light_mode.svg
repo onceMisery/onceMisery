@@ -64,6 +64,6 @@ text {font-size: 15px; white-space: pre;}
 <text x="320" y="301"><tspan class="key">Repos</tspan><tspan class="dot"> ........................ </tspan><tspan class="value">52 active / 96 public</tspan></text>
 <text x="320" y="324"><tspan class="key">Top.Repo</tspan><tspan class="dot"> ..................... </tspan><tspan class="value">t8y2/dbx (56 PRs)</tspan></text>
 <text x="320" y="347"><tspan class="key">Apache</tspan><tspan class="dot"> ....................... </tspan><tspan class="value">7 PRs  seatunnel/pulsar/dubbo</tspan></text>
-<text x="320" y="370"><tspan class="key">Stars</tspan><tspan class="dot"> ........................ </tspan><tspan class="value">27  |  Followers 6</tspan></text>
+<text x="320" y="370"><tspan class="key">Stars</tspan><tspan class="dot"> ........................ </tspan><tspan class="value">28  |  Followers 6</tspan></text>
 <text x="320" y="416" class="prompt">&gt; <tspan class="cursor">&#9608;<animate attributeName="opacity" values="1;0" dur="1.06s" calcMode="discrete" repeatCount="indefinite"/></tspan></text>
 </svg>
