@@ -1,13 +1,13 @@
 {
-  "updated": "2026-11-22T13:10:36+00:00",
-  "window": "2025-11-22 .. 2026-11-22",
+  "updated": "2026-11-23T15:48:15+00:00",
+  "window": "2025-11-23 .. 2026-11-23",
   "login": "onceMisery",
-  "repos": 96,
+  "repos": 97,
   "followers": 6,
-  "active_repos": 51,
+  "active_repos": 52,
   "stars": 28,
-  "prs": 98,
-  "merged": 69,
+  "prs": 99,
+  "merged": 70,
   "apache_prs": 7,
   "dbx_prs": 56
 }
